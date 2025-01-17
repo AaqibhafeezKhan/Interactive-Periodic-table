@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Periodic Table</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Interactive Periodic Table</h1>
+        <div class="controls">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search elements...">
+            </div>
+            <div class="view-toggles">
+                <button id="groupView" class="active">Group View</button>
+                <button id="stateView">State View</button>
+                <button id="resetView">Reset</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="periodic-table" id="periodicTable"></section>
+
+        <section class="element-details" id="elementDetails">
+            <h2>Element Details</h2>
+            <div class="details-content">
+                <p>Click an element to view details</p>
+            </div>
+        </section>
+    </main>
+
+    <aside class="legend">
+        <h3>Legend</h3>
+        <div class="legend-content">
+            <div id="groupLegend">
+                <h4>Element Groups</h4>
+                <ul>
+                    <li><span class="alkali-metal"></span>Alkali Metals</li>
+                    <li><span class="alkaline-earth"></span>Alkaline Earth Metals</li>
+                    <li><span class="transition-metal"></span>Transition Metals</li>
+                    <li><span class="noble-gas"></span>Noble Gases</li>
+                    <li><span class="metalloid"></span>Metalloids</li>
+                    <li><span class="nonmetal"></span>Nonmetals</li>
+                    <li><span class="halogen"></span>Halogens</li>
+                    <li><span class="lanthanide"></span>Lanthanides</li>
+                    <li><span class="actinide"></span>Actinides</li>
+                </ul>
+            </div>
+            <div id="stateLegend" class="hidden">
+                <h4>States at Room Temperature</h4>
+                <ul>
+                    <li><span class="solid"></span>Solid</li>
+                    <li><span class="liquid"></span>Liquid</li>
+                    <li><span class="gas"></span>Gas</li>
+                    <li><span class="unknown"></span>Unknown</li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+
+    <script src="script.js"></script>
+</body>
+</html>
