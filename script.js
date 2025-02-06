@@ -118,136 +118,156 @@ const elements = [
     { number: 117, symbol: 'Ts', name: 'Tennessine', mass: 294, group: 'halogen', state: 'solid', radioactive: true, position: { row: 7, col: 17 } },
     { number: 118, symbol: 'Og', name: 'Oganesson', mass: 294, group: 'noble gas', state: 'solid', radioactive: true, position: { row: 7, col: 18 } }
 ];
+
 class PeriodicTable {
-    constructor() {
-        this.currentView = 'group';
-        this.selectedElement = null;
-        this.init();
+  constructor() {
+    this.currentView = 'group';
+    this.selectedElement = null;
+    this.tableEl = document.getElementById('periodicTable');
+    this.detailsContent = document.querySelector('.details-content');
+    this.groupViewBtn = document.getElementById('groupView');
+    this.stateViewBtn = document.getElementById('stateView');
+    this.resetBtn = document.getElementById('resetView');
+    this.groupLegend = document.getElementById('groupLegend');
+    this.stateLegend = document.getElementById('stateLegend');
+    this.searchInput = document.getElementById('searchInput');
+    this.tooltipTimeout = null;
+    this.init();
+  }
+
+  init() {
+    this.setupEventListeners();
+    this.renderTable();
+    this.setupSearch();
+  }
+
+  setupEventListeners() {
+    this.groupViewBtn.addEventListener('click', () => this.toggleView('group'));
+    this.stateViewBtn.addEventListener('click', () => this.toggleView('state'));
+    this.resetBtn.addEventListener('click', () => this.reset());
+
+    this.tableEl.addEventListener('keydown', (e) => {
+      if (e.target.classList.contains('element') && e.key === 'Enter') {
+        const element = elements[parseInt(e.target.dataset.number) - 1];
+        this.showElementDetails(element);
+      }
+    });
+  }
+
+  setupSearch() {
+    this.searchInput.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      this.searchElements(searchTerm);
+    });
+  }
+
+  searchElements(term) {
+    document.querySelectorAll('.element').forEach((node) => {
+      const elementData = elements[parseInt(node.dataset.number) - 1];
+      const matches =
+        elementData.name.toLowerCase().includes(term) ||
+        elementData.symbol.toLowerCase().includes(term);
+      node.style.opacity = matches || term === '' ? '1' : '0.3';
+    });
+  }
+
+  toggleView(view) {
+    this.currentView = view;
+    this.groupViewBtn.classList.toggle('active', view === 'group');
+    this.stateViewBtn.classList.toggle('active', view === 'state');
+    this.groupViewBtn.setAttribute('aria-pressed', view === 'group');
+    this.stateViewBtn.setAttribute('aria-pressed', view === 'state');
+
+    this.groupLegend.classList.toggle('hidden', view === 'state');
+    this.stateLegend.classList.toggle('hidden', view === 'group');
+
+    this.updateElementStyles();
+  }
+
+  updateElementStyles() {
+    document.querySelectorAll('.element').forEach((node) => {
+      const elementData = elements[parseInt(node.dataset.number) - 1];
+      node.className = `element ${elementData[this.currentView]}${elementData.radioactive ? ' radioactive' : ''}`;
+    });
+  }
+
+  reset() {
+    this.selectedElement = null;
+    this.toggleView('group');
+    this.searchInput.value = '';
+    this.searchElements('');
+    this.updateElementDetails();
+  }
+
+  renderTable() {
+    this.tableEl.innerHTML = '';
+    elements.forEach((element) => {
+      const elementDiv = document.createElement('div');
+      elementDiv.className = `element ${element[this.currentView]}${element.radioactive ? ' radioactive' : ''}`;
+      elementDiv.tabIndex = 0;
+      elementDiv.dataset.number = element.number;
+      elementDiv.style.gridRow = element.position.row;
+      elementDiv.style.gridColumn = element.position.col;
+
+      elementDiv.innerHTML = `
+        <span class="number">${element.number}</span>
+        <span class="symbol">${element.symbol}</span>
+        <span class="mass">${element.mass}</span>
+      `;
+
+      elementDiv.addEventListener('click', () => this.showElementDetails(element));
+
+      elementDiv.addEventListener('mouseenter', () => {
+        this.tooltipTimeout = setTimeout(() => this.showTooltip(element, elementDiv), 300);
+      });
+      elementDiv.addEventListener('mouseleave', () => {
+        clearTimeout(this.tooltipTimeout);
+        this.hideTooltip();
+      });
+
+      this.tableEl.appendChild(elementDiv);
+    });
+  }
+
+  showElementDetails(element) {
+    this.selectedElement = element;
+    this.updateElementDetails();
+  }
+
+  updateElementDetails() {
+    if (!this.selectedElement) {
+      this.detailsContent.innerHTML = '<p>Click an element to view details</p>';
+      return;
     }
+    this.detailsContent.innerHTML = `
+      <h3>${this.selectedElement.name}</h3>
+      <p><strong>Symbol:</strong> ${this.selectedElement.symbol}</p>
+      <p><strong>Atomic Number:</strong> ${this.selectedElement.number}</p>
+      <p><strong>Atomic Mass:</strong> ${this.selectedElement.mass}</p>
+      <p><strong>Group:</strong> ${this.selectedElement.group.replace('-', ' ')}</p>
+      <p><strong>State at Room Temperature:</strong> ${this.selectedElement.state}</p>
+      ${this.selectedElement.radioactive ? '<p><strong>Radioactive:</strong> Yes</p>' : ''}
+    `;
+  }
 
-    init() {
-        this.setupEventListeners();
-        this.renderTable();
-        this.setupSearch();
-    }
+  showTooltip(element, elementDiv) {
+    if (elementDiv.querySelector('.tooltip')) return;
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    tooltip.innerHTML = `
+      <strong>${element.name}</strong><br>
+      ${element.symbol} (${element.number})<br>
+      Mass: ${element.mass}
+    `;
+    elementDiv.appendChild(tooltip);
+  }
 
-    setupEventListeners() {
-        document.getElementById('groupView').addEventListener('click', () => this.toggleView('group'));
-        document.getElementById('stateView').addEventListener('click', () => this.toggleView('state'));
-        document.getElementById('resetView').addEventListener('click', () => this.reset());
-    }
-
-    setupSearch() {
-        const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', (e) => {
-            const searchTerm = e.target.value.toLowerCase();
-            this.searchElements(searchTerm);
-        });
-    }
-
-    searchElements(term) {
-        const elementNodes = document.querySelectorAll('.element');
-        elementNodes.forEach(node => {
-            const elementData = elements[parseInt(node.dataset.number) - 1];
-            const matches = elementData.name.toLowerCase().includes(term) || 
-                           elementData.symbol.toLowerCase().includes(term);
-            node.style.opacity = matches || term === '' ? '1' : '0.3';
-        });
-    }
-
-    toggleView(view) {
-        this.currentView = view;
-        document.getElementById('groupView').classList.toggle('active', view === 'group');
-        document.getElementById('stateView').classList.toggle('active', view === 'state');
-        document.getElementById('groupLegend').classList.toggle('hidden', view === 'state');
-        document.getElementById('stateLegend').classList.toggle('hidden', view === 'group');
-        this.updateElementStyles();
-    }
-
-    updateElementStyles() {
-        const elementNodes = document.querySelectorAll('.element');
-        elementNodes.forEach(node => {
-            const elementData = elements[parseInt(node.dataset.number) - 1];
-            node.className = `element ${elementData[this.currentView]} ${elementData.radioactive ? 'radioactive' : ''}`;
-        });
-    }
-
-    reset() {
-        this.selectedElement = null;
-        this.toggleView('group');
-        document.getElementById('searchInput').value = '';
-        this.searchElements('');
-        this.updateElementDetails();
-    }
-
-    renderTable() {
-        const table = document.getElementById('periodicTable');
-        table.innerHTML = '';
-
-        elements.forEach(element => {
-            const elementDiv = document.createElement('div');
-            elementDiv.className = `element ${element[this.currentView]} ${element.radioactive ? 'radioactive' : ''}`;
-            elementDiv.dataset.number = element.number;
-            elementDiv.style.gridRow = element.position.row;
-            elementDiv.style.gridColumn = element.position.col;
-
-            elementDiv.innerHTML = `
-                <span class="number">${element.number}</span>
-                <span class="symbol">${element.symbol}</span>
-                <span class="mass">${element.mass}</span>
-            `;
-
-            elementDiv.addEventListener('click', () => this.showElementDetails(element));
-            elementDiv.addEventListener('mouseover', () => this.showTooltip(element, elementDiv));
-            elementDiv.addEventListener('mouseout', () => this.hideTooltip());
-
-            table.appendChild(elementDiv);
-        });
-    }
-
-    showElementDetails(element) {
-        this.selectedElement = element;
-        this.updateElementDetails();
-    }
-
-    updateElementDetails() {
-        const detailsDiv = document.querySelector('.details-content');
-        if (!this.selectedElement) {
-            detailsDiv.innerHTML = '<p>Click an element to view details</p>';
-            return;
-        }
-
-        detailsDiv.innerHTML = `
-            <h3>${this.selectedElement.name}</h3>
-            <p><strong>Symbol:</strong> ${this.selectedElement.symbol}</p>
-            <p><strong>Atomic Number:</strong> ${this.selectedElement.number}</p>
-            <p><strong>Atomic Mass:</strong> ${this.selectedElement.mass}</p>
-            <p><strong>Group:</strong> ${this.selectedElement.group}</p>
-            <p><strong>State at Room Temperature:</strong> ${this.selectedElement.state}</p>
-            ${this.selectedElement.radioactive ? '<p><strong>Radioactive:</strong> Yes</p>' : ''}
-        `;
-    }
-
-    showTooltip(element, elementDiv) {
-        const tooltip = document.createElement('div');
-        tooltip.className = 'tooltip';
-        tooltip.innerHTML = `
-            <strong>${element.name}</strong><br>
-            ${element.symbol} (${element.number})<br>
-            Mass: ${element.mass}
-        `;
-        
-        elementDiv.appendChild(tooltip);
-    }
-
-    hideTooltip() {
-        const tooltip = document.querySelector('.tooltip');
-        if (tooltip) {
-            tooltip.remove();
-        }
-    }
+  hideTooltip() {
+    const tooltips = document.querySelectorAll('.tooltip');
+    tooltips.forEach((tooltip) => tooltip.remove());
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.periodicTable = new PeriodicTable();
+  new PeriodicTable();
 });
